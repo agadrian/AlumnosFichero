@@ -1,7 +1,7 @@
 import org.jetbrains.skia.Path
 import java.io.File
 import java.io.FileWriter
-
+// TODO: HACER TRY CATCH EN TODO
 interface IFileManager{
     fun getFile(path: String): File?
     fun loadStudents(file: File): List<String>

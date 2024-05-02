@@ -12,11 +12,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.res.loadImageBitmap
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.useResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import androidx.compose.ui.window.*
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import kotlinx.coroutines.delay
 import java.io.File
 
 fun main() {
@@ -67,6 +70,12 @@ fun StudentScreen(
     var studentsList by remember { mutableStateOf<List<String>>(emptyList()) }
     val scrollState = rememberScrollState()
     val scrollVerticalState = rememberLazyListState()
+
+    val maxCharacters = 10
+    val maxNumStudentsVisible = 7
+
+    var infoMessage by remember { mutableStateOf("") }
+    var showInfoMessage by remember { mutableStateOf(false) }
 
     LaunchedEffect(studentsFile) {
         studentsFile?.let { file ->
@@ -172,12 +181,34 @@ fun StudentScreen(
                 studentsFile?.let { file ->
                     fileManager.saveStudents(file, studentsList)
                 }
+                infoMessage = "Fichero guardado."
+                showInfoMessage = true
             },
             modifier = Modifier
                 .padding(16.dp)
                 .align(Alignment.BottomCenter)
         ) {
             Text("Save changes")
+        }
+    }
+
+    // Gestión de la visibilidad del mensaje informativo
+    if (showInfoMessage) {
+        InfoMessage(
+            message = infoMessage,
+            onCloseInfoMessage = {
+                showInfoMessage = false
+                infoMessage = ""
+            }
+        )
+    }
+
+    // Automáticamente oculta el mensaje después de un retraso
+    LaunchedEffect(showInfoMessage) {
+        if (showInfoMessage) {
+            delay(2000)
+            showInfoMessage = false
+            infoMessage = ""
         }
     }
 
@@ -199,6 +230,23 @@ fun StudentRow(student: String, onDelete: () -> Unit) {
             onClick = onDelete
         ) {
             Icon(Icons.Filled.Delete, contentDescription = "Delete Student")
+        }
+    }
+}
+
+@Composable
+fun InfoMessage(message: String, onCloseInfoMessage: () -> Unit) {
+    Dialog(
+        icon = painterResource("icon.png"),
+        title = "Atención",
+        resizable = false,
+        onCloseRequest = onCloseInfoMessage
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize().padding(16.dp)
+        ) {
+            Text(message)
         }
     }
 }
