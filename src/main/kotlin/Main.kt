@@ -2,6 +2,7 @@ import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
@@ -65,6 +66,7 @@ fun StudentScreen(
     var newStudent by remember { mutableStateOf("") }
     var studentsList by remember { mutableStateOf<List<String>>(emptyList()) }
     val scrollState = rememberScrollState()
+    val scrollVerticalState = rememberLazyListState()
 
     LaunchedEffect(studentsFile) {
         studentsFile?.let { file ->
@@ -73,87 +75,97 @@ fun StudentScreen(
         }
     }
 
-
-    Row(
-        modifier = Modifier
-            .fillMaxSize(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        // COLUMNA FORMULARIO
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+    Box {
+        Row(
+            modifier = Modifier
+                .fillMaxSize(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
-            OutlinedTextField(
-                value = newStudent,
-                onValueChange = { newStudent = it },
-                label = { Text("New student name") },
-                modifier = Modifier
-                    .padding(15.dp)
+            // COLUMNA FORMULARIO
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                OutlinedTextField(
+                    value = newStudent,
+                    onValueChange = { newStudent = it },
+                    label = { Text("New student name") },
+                    modifier = Modifier
+                        .padding(15.dp)
                 )
 
-            Button(
-                onClick = {
-                    if (newStudent.isNotBlank()) {
-                        studentsList = studentsList + newStudent
-                        newStudent = ""
-                    }
-                },
-                modifier = Modifier.padding(15.dp)
-            ) {
-                Text("Add student")
+                Button(
+                    onClick = {
+                        if (newStudent.isNotBlank()) {
+                            studentsList = studentsList + newStudent
+                            newStudent = ""
+                        }
+                    },
+                    modifier = Modifier.padding(15.dp)
+                ) {
+                    Text("Add student")
+                }
             }
-        }
 
 
-        // COLUMNA LISTA
-        Column(
-            modifier = Modifier
-                .verticalScroll(scrollState)
-        ) {
-            Box {
-                Text("Students: ${studentsList.size}",
-                    modifier =  Modifier
-                        .background(Color.Red))
+            // COLUMNA LISTA
+            Column(
+                modifier = Modifier
+                    .verticalScroll(scrollState)
+            ) {
+                Text(
+                    "Students: ${studentsList.size}",
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
 
-                LazyColumn(
+                )
+
+                Box(
                     modifier = Modifier
                         .background(Color.White)
                         .height(300.dp)
                         .border(2.dp, Color.Black)
                         .padding(10.dp)
-                        .widthIn(min = 200.dp, max = 350.dp)
+                        .width(200.dp)
                 ) {
 
-                    items(studentsList.size) { index ->
-                        StudentRow(
-                            student = studentsList[index],
-                            onDelete = { studentsList = studentsList.filterIndexed { i, _ -> i != index } }
-                        )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize()
+                            .padding(10.dp),
+                        scrollVerticalState
+
+                    ) {
+
+                        items(studentsList.size) { index ->
+                            StudentRow(
+                                student = studentsList[index],
+                                onDelete = { studentsList = studentsList.filterIndexed { i, _ -> i != index } }
+                            )
+                        }
                     }
+
+                    VerticalScrollbar(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .align(Alignment.CenterEnd),
+                        adapter = rememberScrollbarAdapter(
+                            scrollState = scrollVerticalState
+                        )
+                    )
                 }
 
-                VerticalScrollbar(
+                Button(
+                    onClick = { studentsList = emptyList() },
                     modifier = Modifier
-                        .height(300.dp)
-                        .align(Alignment.CenterEnd),
-                    adapter = rememberScrollbarAdapter(
-                        scrollState = scrollState
-                    )
-                )
-            }
-
-            Button(
-                onClick = { studentsList = emptyList() },
-                modifier = Modifier
-                    .padding(15.dp),
-            ) {
-                Text("Clear all")
+                        .padding(15.dp),
+                ) {
+                    Text("Clear all")
+                }
             }
         }
+
 
         Button(
             onClick = {
@@ -163,11 +175,11 @@ fun StudentScreen(
             },
             modifier = Modifier
                 .padding(16.dp)
+                .align(Alignment.BottomCenter)
         ) {
             Text("Save changes")
         }
     }
-
 
 }
 
@@ -180,7 +192,7 @@ fun StudentRow(student: String, onDelete: () -> Unit) {
             text = student,
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .widthIn(min = 100.dp)
+                .widthIn(min = 120.dp)
         )
 
         IconButton(
