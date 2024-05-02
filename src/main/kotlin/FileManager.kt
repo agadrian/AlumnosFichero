@@ -1,9 +1,11 @@
 import org.jetbrains.skia.Path
 import java.io.File
+import java.io.FileWriter
 
 interface IFileManager{
     fun getFile(path: String): File?
     fun loadStudents(file: File): List<String>
+    fun saveStudents(file: File, studentList: List<String>)
 }
 
 class FileManager: IFileManager {
@@ -21,6 +23,14 @@ class FileManager: IFileManager {
             }
         }
         return studentsList
+    }
+
+    override fun saveStudents(file: File, students: List<String>) {
+        FileWriter(file).use { writer ->
+            students.forEach { student ->
+                writer.write("$student\n")
+            }
+        }
     }
 
 

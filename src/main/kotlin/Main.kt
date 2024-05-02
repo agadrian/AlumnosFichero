@@ -1,27 +1,20 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.useResource
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import com.sun.tools.javac.Main
 import java.io.File
-import javax.swing.Icon
 
 fun main() {
     val title = "AdriAG"
@@ -80,99 +73,112 @@ fun StudentScreen(
         }
     }
 
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier.fillMaxSize()
 
+    Row(
+        modifier = Modifier
+            .fillMaxSize(),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
-        Row(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+        // COLUMNA FORMULARIO
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
 
-                OutlinedTextField(
-                    value = newStudent,
-                    onValueChange = { newStudent = it },
-                    label = { Text("New student name") },
-                    modifier = Modifier
-                        .padding(15.dp)
-                        .background(Color.White),
+            OutlinedTextField(
+                value = newStudent,
+                onValueChange = { newStudent = it },
+                label = { Text("New student name") },
+                modifier = Modifier
+                    .padding(15.dp)
+                    .background(Color.White),
 
-                    )
-
-                Button(
-                    onClick = {
-                        if (newStudent.isNotBlank()) {
-                            studentsList = studentsList + newStudent
-                            newStudent = ""
-                        }
-                    },
-                    modifier = Modifier.padding(15.dp)
-                ) {
-                    Text("Add student")
-                }
-            }
-
-
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-
-                Column(
-                    modifier = Modifier
-                        .background(Color.White)
-                        .border(2.dp, Color.Black)
-                        .padding(10.dp)
-                        .heightIn(max = 400.dp)
-                        .verticalScroll(scrollState)
-
-                ) {
-                    studentsList.forEach { student ->
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-
-                            Text(
-                                text = student,
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                                    .fillMaxWidth(0.4f)
-                            )
-
-                            IconButton(
-                                onClick = { studentsList = studentsList.filter { it != student } },
-                            ) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Delete Student")
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    Button(
-                        onClick = { studentsList = emptyList() },
-                        modifier = Modifier.padding(15.dp)
-                    ) {
-                        Text("Clear all")
-                    }
-
-
-
-                }
-                VerticalScrollbar(
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                        .fillMaxHeight(),
-                    adapter = rememberScrollbarAdapter(scrollState)
                 )
 
-
+            Button(
+                onClick = {
+                    if (newStudent.isNotBlank()) {
+                        studentsList = studentsList + newStudent
+                        newStudent = ""
+                    }
+                },
+                modifier = Modifier.padding(15.dp)
+            ) {
+                Text("Add student")
             }
+        }
+
+
+
+        // COLUMNA LISTA
+        Column(
+            modifier = Modifier
+                .background(Color.White)
+                .border(2.dp, Color.Black)
+                .padding(10.dp)
+                .heightIn(max = 400.dp)
+                .verticalScroll(scrollState)
+                .background(color = Color.Red)
+
+        ) {
+
+
+            studentsList.forEach { student ->
+                StudentRow(
+                    student = student,
+                    onDelete = {  studentsList = studentsList.filter { it != student }  }
+                )
+            }
+
+            Button(
+                onClick = { studentsList = emptyList() },
+                modifier = Modifier.padding(15.dp)
+            ) {
+                Text("Clear all")
+            }
+        }
+
+        VerticalScrollbar(
+            modifier = Modifier.align(Alignment.CenterVertically)
+                .heightIn(max = 400.dp),
+            adapter = rememberScrollbarAdapter(scrollState)
+        )
+
+
+        Button(
+            onClick = {
+                studentsFile?.let { file ->
+                    fileManager.saveStudents(file, studentsList)
+                }
+            },
+            modifier = Modifier
+                .padding(16.dp)
+
+        ) {
+            Text("Save changes")
+        }
+    }
+
+}
+
+@Composable
+fun StudentRow(student: String, onDelete: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = student,
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .widthIn(min = 100.dp) // Ajustar el ancho mínimo
+        )
+
+        IconButton(
+            onClick = onDelete
+        ) {
+            Icon(Icons.Filled.Delete, contentDescription = "Delete Student")
         }
     }
 }
-
