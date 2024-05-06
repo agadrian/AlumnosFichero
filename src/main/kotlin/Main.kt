@@ -22,231 +22,30 @@ import androidx.compose.ui.window.application
 import kotlinx.coroutines.delay
 import java.io.File
 
-fun main() {
+fun main() = application{
+
     val title = "AdriAG"
     val icon = BitmapPainter(useResource("icon.png", ::loadImageBitmap))
+    val windowState = GetWindowState(
+        windowWidth = 800.dp,
+        windowHeight = 800.dp
+    )
     val fileManager: IFileManager = FileManager()
     val studentsFile = fileManager.getFile("src/main/resources/students.txt")
 
-    application {
-        Window(
-            title = title,
-            icon = icon,
-            onCloseRequest = { exitApplication() }
-        ) {
-            MainWindow(
-                fileManager = fileManager,
-                studentsFile = studentsFile
-            )
-        }
-    }
-}
 
-
-@Composable
-@Preview
-fun MainWindow(
-    fileManager: IFileManager,
-    studentsFile: File?
-) {
-    MaterialTheme {
-        Surface(
-            color = Color.LightGray
-        ) {
-            StudentScreen(
-                fileManager = fileManager,
-                studentsFile = studentsFile
-            )
-        }
-    }
-}
-
-@Composable
-fun StudentScreen(
-    fileManager: IFileManager,
-    studentsFile: File?
-){
-    var newStudent by remember { mutableStateOf("") }
-    var studentsList by remember { mutableStateOf<List<String>>(emptyList()) }
-    val scrollState = rememberScrollState()
-    val scrollVerticalState = rememberLazyListState()
-
-    val maxCharacters = 10
-    val maxNumStudentsVisible = 7
-
-    var infoMessage by remember { mutableStateOf("") }
-    var showInfoMessage by remember { mutableStateOf(false) }
-
-    LaunchedEffect(studentsFile) {
-        studentsFile?.let { file ->
-            val loadedStudents = fileManager.loadStudents(file)
-            studentsList = loadedStudents
-        }
-    }
-
-    Box {
-        Row(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            // COLUMNA FORMULARIO
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-                OutlinedTextField(
-                    value = newStudent,
-                    onValueChange = { newStudent = it },
-                    label = { Text("New student name") },
-                    modifier = Modifier
-                        .padding(15.dp)
-                )
-
-                Button(
-                    onClick = {
-                        if (newStudent.isNotBlank()) {
-                            studentsList = studentsList + newStudent
-                            newStudent = ""
-                        }
-                    },
-                    modifier = Modifier.padding(15.dp)
-                ) {
-                    Text("Add student")
-                }
-            }
-
-
-            // COLUMNA LISTA
-            Column(
-                modifier = Modifier
-                    .verticalScroll(scrollState)
-            ) {
-                Text(
-                    "Students: ${studentsList.size}",
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-
-                )
-
-                Box(
-                    modifier = Modifier
-                        .background(Color.White)
-                        .height(300.dp)
-                        .border(2.dp, Color.Black)
-                        .padding(10.dp)
-                        .width(200.dp)
-                ) {
-
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize()
-                            .padding(10.dp),
-                        scrollVerticalState
-
-                    ) {
-
-                        items(studentsList.size) { index ->
-                            StudentRow(
-                                student = studentsList[index],
-                                onDelete = { studentsList = studentsList.filterIndexed { i, _ -> i != index } }
-                            )
-                        }
-                    }
-
-                    VerticalScrollbar(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .align(Alignment.CenterEnd),
-                        adapter = rememberScrollbarAdapter(
-                            scrollState = scrollVerticalState
-                        )
-                    )
-                }
-
-                Button(
-                    onClick = { studentsList = emptyList() },
-                    modifier = Modifier
-                        .padding(15.dp),
-                ) {
-                    Text("Clear all")
-                }
-            }
-        }
-
-
-        Button(
-            onClick = {
-                studentsFile?.let { file ->
-                    fileManager.saveStudents(file, studentsList)
-                }
-                infoMessage = "Fichero guardado."
-                showInfoMessage = true
-            },
-            modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.BottomCenter)
-        ) {
-            Text("Save changes")
-        }
-    }
-
-    // Gestión de la visibilidad del mensaje informativo
-    if (showInfoMessage) {
-        InfoMessage(
-            message = infoMessage,
-            onCloseInfoMessage = {
-                showInfoMessage = false
-                infoMessage = ""
-            }
-        )
-    }
-
-    // Automáticamente oculta el mensaje después de un retraso
-    LaunchedEffect(showInfoMessage) {
-        if (showInfoMessage) {
-            delay(2000)
-            showInfoMessage = false
-            infoMessage = ""
-        }
-    }
-
-}
-
-@Composable
-fun StudentRow(student: String, onDelete: () -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = student,
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .widthIn(min = 120.dp)
-        )
-
-        IconButton(
-            onClick = onDelete
-        ) {
-            Icon(Icons.Filled.Delete, contentDescription = "Delete Student")
-        }
-    }
-}
-
-@Composable
-fun InfoMessage(message: String, onCloseInfoMessage: () -> Unit) {
-    Dialog(
-        icon = painterResource("icon.png"),
-        title = "Atención",
+    MainWindow(
+        title = title,
+        icon = icon,
+        windowState = windowState,
         resizable = false,
-        onCloseRequest = onCloseInfoMessage
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize().padding(16.dp)
-        ) {
-            Text(message)
-        }
-    }
+        fileManager = fileManager,
+        studentsFile = studentsFile,
+        onCloseMainWindow = { exitApplication() }
+    )
+
 }
+
+
+
+
