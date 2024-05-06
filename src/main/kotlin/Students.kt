@@ -72,14 +72,15 @@ fun MainWindow(
         state = windowState
     ) {
 
-
+        val studentsViewModel = StudentsViewModel(fileManager, studentsFile!!)
         MaterialTheme {
             Surface(
                 color = colorWindowBackground
             ) {
                 StudentScreen(
                     fileManager = fileManager,
-                    studentsFile = studentsFile
+                    studentsFile = studentsFile,
+                    viewModel = studentsViewModel
                 )
             }
         }
@@ -92,14 +93,17 @@ fun MainWindow(
 @Composable
 fun StudentScreen(
     fileManager: IFileManager,
-    studentsFile: File?
+    studentsFile: File?,
+    viewModel: IStudentsViewModel
 ){
-    var newStudent by remember { mutableStateOf("") }
+    val newStudent by viewModel.newStudent
     var studentsList by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    //dEJAR AQUI
     val scrollState = rememberScrollState()
     val scrollVerticalState = rememberLazyListState()
 
-
+    //DEJAR AQUI
     val newStudentFocusRequester = remember { FocusRequester() }
     val studentListFocusRequester = remember { FocusRequester() }
 
@@ -131,7 +135,7 @@ fun StudentScreen(
 
                 OutlinedTextField(
                     value = newStudent,
-                    onValueChange = { newStudent = it },
+                    onValueChange = { viewModel.changeName(it) },
                     label = { Text("New student name") },
                     modifier = Modifier
                         .padding(15.dp)
@@ -141,8 +145,9 @@ fun StudentScreen(
                 Button(
                     onClick = {
                         if (newStudent.isNotBlank()) {
-                            studentsList = studentsList + newStudent
-                            newStudent = ""
+                            //studentsList = studentsList + newStudent
+                            //newStudent = ""
+                            viewModel.addStudent()
                         }
                         newStudentFocusRequester.requestFocus()
                     },
