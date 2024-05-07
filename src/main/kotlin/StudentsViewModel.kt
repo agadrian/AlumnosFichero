@@ -28,7 +28,7 @@ class StudentsViewModel(
 
     companion object {
         private const val MAXCHARACTERS = 10
-        private const val MAXNUMSTUDENTSVISIBLE = 7
+        //private const val MAXNUMSTUDENTSVISIBLE = 7
     }
 
     private var _newStudent = mutableStateOf("")
