@@ -10,12 +10,15 @@ interface IStudentsViewModel{
     val studentList: List<String>
     val infoMessage: State<String>
     val showInfoMessage: State<Boolean>
+    val selectedIndex: State<Int>
     fun changeName(name: String)
     fun addStudent()
     fun saveStudents()
     fun clearStudents()
     fun loadStudents()
     fun deleteStudent(index: Int)
+    fun showInfoMessage(show: Boolean)
+    fun studentSelected(index: Int)
 }
 
 class StudentsViewModel(
@@ -31,7 +34,7 @@ class StudentsViewModel(
     private var _newStudent = mutableStateOf("")
     override val newStudent: State<String> = _newStudent
 
-    private var _studentList = mutableStateListOf<String>()
+    private val _studentList = mutableStateListOf<String>()
     override val studentList: List<String> = _studentList
 
     private val _infoMessage = mutableStateOf("")
@@ -39,6 +42,10 @@ class StudentsViewModel(
 
     private val _showInfoMessage = mutableStateOf(false)
     override val showInfoMessage: State<Boolean> = _showInfoMessage
+
+    private val _selectedIndex = mutableStateOf(-1) // -1 significa que no hay selección
+    override val selectedIndex: State<Int> = _selectedIndex
+
 
 
 
@@ -101,6 +108,14 @@ class StudentsViewModel(
        if (index in _studentList.indices){
            _studentList.removeAt(index)
        }
+    }
+
+    override fun showInfoMessage(show: Boolean) {
+        _showInfoMessage.value = show
+    }
+
+    override fun studentSelected(index: Int) {
+        _selectedIndex.value = index
     }
 
 }

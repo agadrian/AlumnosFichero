@@ -76,11 +76,10 @@ fun MainWindow(
         val studentsViewModel = StudentsViewModel(fileManager, studentsFile!!)
         MaterialTheme {
             Surface(
-                color = colorWindowBackground
+                color = colorWindowBackground,
+                modifier = Modifier.fillMaxSize()
             ) {
                 StudentScreen(
-                    fileManager = fileManager,
-                    studentsFile = studentsFile,
                     viewModel = studentsViewModel
                 )
             }
@@ -93,13 +92,10 @@ fun MainWindow(
 
 @Composable
 fun StudentScreen(
-    fileManager: IFiles,
-    studentsFile: File?,
     viewModel: IStudentsViewModel
 ){
     val newStudent by viewModel.newStudent
     val studentsList = viewModel.studentList
-    //var studentsList by remember { mutableStateOf<List<String>>(emptyList()) }
 
     //DEJAR AQUI
     val scrollState = rememberScrollState()
@@ -109,11 +105,10 @@ fun StudentScreen(
     val newStudentFocusRequester = remember { FocusRequester() }
     val studentListFocusRequester = remember { FocusRequester() }
 
-    val maxCharacters = 10
-    val maxNumStudentsVisible = 7
+    val infoMessage by viewModel.infoMessage
+    val showInfoMessage by viewModel.showInfoMessage
 
-    var infoMessage by remember { mutableStateOf("") }
-    var showInfoMessage by remember { mutableStateOf(false) }
+    val selectedIndex by viewModel.selectedIndex
 
     LaunchedEffect(key1 = true) {  // key1 = true asegura que esto se ejecute solo una vez
         viewModel.loadStudents()
@@ -132,7 +127,8 @@ fun StudentScreen(
             StudentFormColumn(
                 newStudent = newStudent,
                 newStudentFocusRequester = newStudentFocusRequester,
-                viewModel = viewModel
+                onNewStudentChange = {name ->  viewModel.changeName(name) },
+                onButtonAddStudent = { viewModel.addStudent() }
             )
 
 
@@ -144,25 +140,19 @@ fun StudentScreen(
                 scrollVerticalState = scrollVerticalState,
                 studentListFocusRequester = studentListFocusRequester,
                 onDelete = { index -> viewModel.deleteStudent(index) },
-                viewModel = viewModel
+                onButtonClearStudentsClick = { viewModel.clearStudents() },
+                onStudentSelected = { index -> viewModel.studentSelected(index) },
+                selectedIndex = selectedIndex
+
             )
         }
 
         SaveChangesButton(
-            onSaveChangues = {
-//                studentsFile?.let { file ->
-//                    fileManager.saveStudents(file, studentsList)
-//                }
-//                infoMessage = "Fichero guardado."
-//                showInfoMessage = true
+            onSaveChanges = {
                 viewModel.saveStudents()
                 newStudentFocusRequester.requestFocus()
             }
-
         )
-
-
-
     }
 
     // Gestión de la visibilidad del mensaje informativo
@@ -170,8 +160,8 @@ fun StudentScreen(
         InfoMessage(
             message = infoMessage,
             onCloseInfoMessage = {
-                showInfoMessage = false
-                infoMessage = ""
+                viewModel.showInfoMessage(false)
+                newStudentFocusRequester.requestFocus()
             }
         )
     }
@@ -179,9 +169,8 @@ fun StudentScreen(
     // Automáticamente oculta el mensaje después de un retraso
     LaunchedEffect(showInfoMessage) {
         if (showInfoMessage) {
-            delay(2000)
-            showInfoMessage = false
-            infoMessage = ""
+            delay(1000)
+            viewModel.showInfoMessage(false)
         }
     }
 
@@ -192,7 +181,8 @@ fun StudentScreen(
 fun StudentFormColumn(
     newStudent: String,
     newStudentFocusRequester: FocusRequester,
-    viewModel: IStudentsViewModel
+    onNewStudentChange: (String) -> Unit,
+    onButtonAddStudent: () -> Unit
 ){
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
@@ -200,7 +190,7 @@ fun StudentFormColumn(
 
         OutlinedTextField(
             value = newStudent,
-            onValueChange = { viewModel.changeName(it) },
+            onValueChange =  onNewStudentChange ,
             label = { Text("New student name") },
             modifier = Modifier
                 .padding(15.dp)
@@ -209,11 +199,8 @@ fun StudentFormColumn(
 
         Button(
             onClick = {
-                if (newStudent.isNotBlank()) {
-                    //studentsList = studentsList + newStudent
-                    //newStudent = ""
-                    viewModel.addStudent()
-                }
+                if (newStudent.isNotBlank()) onButtonAddStudent()
+
                 newStudentFocusRequester.requestFocus()
             },
             modifier = Modifier.padding(15.dp)
@@ -231,7 +218,9 @@ fun StudentListColumn(
     scrollVerticalState: LazyListState,
     studentListFocusRequester: FocusRequester,
     onDelete: (Int) -> Unit,
-    viewModel: IStudentsViewModel
+    onButtonClearStudentsClick: () -> Unit,
+    onStudentSelected: (Int) -> Unit,
+    selectedIndex: Int
 ){
     Column(
         modifier = Modifier
@@ -241,7 +230,6 @@ fun StudentListColumn(
             "Students: ${studentsList.size}",
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
-
         )
 
         Box(
@@ -256,16 +244,22 @@ fun StudentListColumn(
             LazyColumn(
                 modifier = Modifier.fillMaxSize()
                     .padding(10.dp)
-                    .focusRequester(studentListFocusRequester),
+                    .focusRequester(studentListFocusRequester)
+                    .focusable()
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused && selectedIndex >= 0){
+                            onStudentSelected(selectedIndex)
+                        }
+                    },
                 scrollVerticalState
 
             ) {
-
                 items(studentsList.size) { index ->
                     StudentRow(
                         student = studentsList[index],
-                        onDelete = { onDelete(index) }
-                        //onDelete = { studentsList = studentsList.filterIndexed { i, _ -> i != index } }
+                        onDelete = { onDelete(index) },
+                        index = index,
+                        selectedIndex = selectedIndex
                     )
                 }
             }
@@ -281,7 +275,7 @@ fun StudentListColumn(
         }
 
         Button(
-            onClick = { viewModel.clearStudents() },
+            onClick = { onButtonClearStudentsClick() },
             modifier = Modifier
                 .padding(15.dp),
         ) {
@@ -293,17 +287,23 @@ fun StudentListColumn(
 
 @Composable
 fun SaveChangesButton(
-    onSaveChangues: () -> Unit
+    onSaveChanges: () -> Unit
 ){
-    Button(
-        onClick = onSaveChangues,
-        modifier = Modifier
-            .padding(16.dp)
-            //.align(Alignment.BottomCenter)
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        Text("Save changes")
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Button(
+                onClick = onSaveChanges
+            ) {
+                Text("Save changes")
+            }
+        }
     }
-
 }
 
 
@@ -311,7 +311,9 @@ fun SaveChangesButton(
 @Composable
 fun StudentRow(
     student: String,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    index: Int,
+    selectedIndex: Int
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically
@@ -321,6 +323,7 @@ fun StudentRow(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .widthIn(min = 120.dp)
+                .background(if (index == selectedIndex) Color(0xFF9CDCFA) else Color.Transparent)
         )
 
         IconButton(
@@ -332,7 +335,10 @@ fun StudentRow(
 }
 
 @Composable
-fun InfoMessage(message: String, onCloseInfoMessage: () -> Unit) {
+fun InfoMessage(
+    message: String,
+    onCloseInfoMessage: () -> Unit
+) {
     Dialog(
         icon = painterResource("icon.png"),
         title = "Atención",
