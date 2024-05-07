@@ -1,7 +1,10 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxScopeInstance.align
+import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -128,108 +131,42 @@ fun StudentScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
+
             // COLUMNA FORMULARIO
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            StudentFormColumn(
+                newStudent = newStudent,
+                newStudentFocusRequester = newStudentFocusRequester,
+                viewModel = viewModel
+            )
 
-                OutlinedTextField(
-                    value = newStudent,
-                    onValueChange = { viewModel.changeName(it) },
-                    label = { Text("New student name") },
-                    modifier = Modifier
-                        .padding(15.dp)
-                        .focusRequester(newStudentFocusRequester)
-                )
-
-                Button(
-                    onClick = {
-                        if (newStudent.isNotBlank()) {
-                            //studentsList = studentsList + newStudent
-                            //newStudent = ""
-                            viewModel.addStudent()
-                        }
-                        newStudentFocusRequester.requestFocus()
-                    },
-                    modifier = Modifier.padding(15.dp)
-                ) {
-                    Text("Add student")
-                }
-            }
 
 
             // COLUMNA LISTA
-            Column(
-                modifier = Modifier
-                    .verticalScroll(scrollState)
-            ) {
-                Text(
-                    "Students: ${studentsList.size}",
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-
-                )
-
-                Box(
-                    modifier = Modifier
-                        .background(Color.White)
-                        .height(300.dp)
-                        .border(2.dp, Color.Black)
-                        .padding(10.dp)
-                        .width(200.dp)
-                ) {
-
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize()
-                            .padding(10.dp)
-                            .focusRequester(studentListFocusRequester),
-                        scrollVerticalState
-
-                    ) {
-
-                        items(studentsList.size) { index ->
-                            StudentRow(
-                                student = studentsList[index],
-                                onDelete = { studentsList = studentsList.filterIndexed { i, _ -> i != index } }
-                            )
-                        }
-                    }
-
-                    VerticalScrollbar(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .align(Alignment.CenterEnd),
-                        adapter = rememberScrollbarAdapter(
-                            scrollState = scrollVerticalState
-                        )
-                    )
-                }
-
-                Button(
-                    onClick = { studentsList = emptyList() },
-                    modifier = Modifier
-                        .padding(15.dp),
-                ) {
-                    Text("Clear all")
-                }
-            }
+            StudentListColumn(
+                studentsList = studentsList,
+                scrollState = scrollState,
+                scrollVerticalState = scrollVerticalState,
+                studentListFocusRequester = studentListFocusRequester,
+                onDelete = { index -> studentsList = studentsList.filterIndexed { i, _ -> i != index } },
+            )
         }
 
-
-        Button(
-            onClick = {
+        SaveChangesButton(
+            studentsFile = studentsFile,
+            fileManager = fileManager,
+            studentsList = studentsList,
+            onSaveChangues = {
                 studentsFile?.let { file ->
                     fileManager.saveStudents(file, studentsList)
                 }
                 infoMessage = "Fichero guardado."
                 showInfoMessage = true
-            },
-            modifier = Modifier
-                .padding(16.dp)
-                .align(Alignment.BottomCenter)
-        ) {
-            Text("Save changes")
-        }
+            }
+
+        )
+
+
+
     }
 
     // Gestión de la visibilidad del mensaje informativo
@@ -254,8 +191,134 @@ fun StudentScreen(
 
 }
 
+
 @Composable
-fun StudentRow(student: String, onDelete: () -> Unit) {
+fun StudentFormColumn(
+    newStudent: String,
+    newStudentFocusRequester: FocusRequester,
+    viewModel: IStudentsViewModel
+){
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        OutlinedTextField(
+            value = newStudent,
+            onValueChange = { viewModel.changeName(it) },
+            label = { Text("New student name") },
+            modifier = Modifier
+                .padding(15.dp)
+                .focusRequester(newStudentFocusRequester)
+        )
+
+        Button(
+            onClick = {
+                if (newStudent.isNotBlank()) {
+                    //studentsList = studentsList + newStudent
+                    //newStudent = ""
+                    viewModel.addStudent()
+                }
+                newStudentFocusRequester.requestFocus()
+            },
+            modifier = Modifier.padding(15.dp)
+        ) {
+            Text("Add student")
+        }
+    }
+}
+
+
+@Composable
+fun StudentListColumn(
+    studentsList: List<String>,
+    scrollState: ScrollState,
+    scrollVerticalState: LazyListState,
+    studentListFocusRequester: FocusRequester,
+    onDelete: (Int) -> Unit
+){
+    Column(
+        modifier = Modifier
+            .verticalScroll(scrollState)
+    ) {
+        Text(
+            "Students: ${studentsList.size}",
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+
+        )
+
+        Box(
+            modifier = Modifier
+                .background(Color.White)
+                .height(300.dp)
+                .border(2.dp, Color.Black)
+                .padding(10.dp)
+                .width(200.dp)
+        ) {
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+                    .padding(10.dp)
+                    .focusRequester(studentListFocusRequester),
+                scrollVerticalState
+
+            ) {
+
+                items(studentsList.size) { index ->
+                    StudentRow(
+                        student = studentsList[index],
+                        onDelete = { onDelete(index) }
+                        //onDelete = { studentsList = studentsList.filterIndexed { i, _ -> i != index } }
+                    )
+                }
+            }
+
+            VerticalScrollbar(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .align(Alignment.CenterEnd),
+                adapter = rememberScrollbarAdapter(
+                    scrollState = scrollVerticalState
+                )
+            )
+        }
+
+        Button(
+            onClick = { studentsList = emptyList() },
+            modifier = Modifier
+                .padding(15.dp),
+        ) {
+            Text("Clear all")
+        }
+    }
+}
+
+
+@Composable
+fun SaveChangesButton(
+    studentsFile: File?,
+    fileManager: IFileManager,
+    studentsList: List<String>,
+    onSaveChangues: () -> Unit
+){
+    Button(
+        onClick = onSaveChangues,
+        modifier = Modifier
+            .padding(16.dp)
+            //.align(Alignment.BottomCenter)
+    ) {
+        Text("Save changes")
+    }
+
+}
+
+
+
+@Composable
+fun StudentRow(
+    student: String,
+    onDelete: () -> Unit
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically
     ) {

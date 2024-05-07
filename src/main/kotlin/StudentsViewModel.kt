@@ -5,6 +5,7 @@ interface IStudentsViewModel{
     val studentList: List<String>
     fun changeName(name: String)
     fun addStudent()
+    fun saveStudents()
 }
 
 class StudentsViewModel(
@@ -33,6 +34,10 @@ class StudentsViewModel(
             _studentList.add(_newStudent.value.trim())
             _newStudent.value = ""
         }
+    }
+
+    override fun saveStudents(){
+
     }
 
 }
