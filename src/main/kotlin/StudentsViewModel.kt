@@ -6,6 +6,7 @@ interface IStudentsViewModel{
     fun changeName(name: String)
     fun addStudent()
     fun saveStudents()
+    fun clearStudents()
 }
 
 class StudentsViewModel(
