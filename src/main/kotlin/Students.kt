@@ -234,9 +234,9 @@ fun StudentListColumn(
 
         Box(
             modifier = Modifier
-                .background(Color.White)
+                .background(colorFocusComponentsBackground)
                 .height(300.dp)
-                .border(2.dp, Color.Black)
+                .border(2.dp, colorBorder)
                 .padding(10.dp)
                 .width(200.dp)
         ) {
@@ -323,7 +323,7 @@ fun StudentRow(
             modifier = Modifier
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .widthIn(min = 120.dp)
-                .background(if (index == selectedIndex) Color(0xFF9CDCFA) else Color.Transparent)
+                .background(if (index == selectedIndex) colorSelected else colorUnselected)
         )
 
         IconButton(
