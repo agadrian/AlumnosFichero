@@ -5,21 +5,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-interface IStudentsViewModel{
-    val newStudent: State<String>
-    val studentList: List<String>
-    val infoMessage: State<String>
-    val showInfoMessage: State<Boolean>
-    val selectedIndex: State<Int>
-    fun changeName(name: String)
-    fun addStudent()
-    fun saveStudents()
-    fun clearStudents()
-    fun loadStudents()
-    fun deleteStudent(index: Int)
-    fun showInfoMessage(show: Boolean)
-    fun studentSelected(index: Int)
-}
 
 class StudentsViewModel(
     private val fileManagement: IFiles,
