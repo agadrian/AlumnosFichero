@@ -1,8 +1,6 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.BoxScopeInstance.align
-import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -11,25 +9,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.key.*
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import kotlinx.coroutines.delay
 import java.awt.Toolkit
-import java.awt.Window
 import java.io.File
 
 
@@ -75,15 +66,13 @@ fun MainWindow(
         state = windowState
     ) {
 
-        val studentsViewModel = StudentsViewModel(fileManager, studentsFile!!)
         MaterialTheme {
             Surface(
-                color = colorWindowBackground
+                color = Color.LightGray
             ) {
                 StudentScreen(
                     fileManager = fileManager,
-                    studentsFile = studentsFile,
-                    viewModel = studentsViewModel
+                    studentsFile = studentsFile
                 )
             }
         }
@@ -96,17 +85,14 @@ fun MainWindow(
 @Composable
 fun StudentScreen(
     fileManager: IFileManager,
-    studentsFile: File?,
-    viewModel: IStudentsViewModel
+    studentsFile: File?
 ){
-    val newStudent by viewModel.newStudent
+    var newStudent by remember { mutableStateOf("") }
     var studentsList by remember { mutableStateOf<List<String>>(emptyList()) }
-
-    //dEJAR AQUI
     val scrollState = rememberScrollState()
     val scrollVerticalState = rememberLazyListState()
 
-    //DEJAR AQUI
+
     val newStudentFocusRequester = remember { FocusRequester() }
     val studentListFocusRequester = remember { FocusRequester() }
 
@@ -115,6 +101,7 @@ fun StudentScreen(
 
     var infoMessage by remember { mutableStateOf("") }
     var showInfoMessage by remember { mutableStateOf(false) }
+
 
     LaunchedEffect(studentsFile) {
         studentsFile?.let { file ->
@@ -135,8 +122,11 @@ fun StudentScreen(
             // COLUMNA FORMULARIO
             StudentFormColumn(
                 newStudent = newStudent,
+                onNewStudentChange = { newStudent = it},
                 newStudentFocusRequester = newStudentFocusRequester,
-                viewModel = viewModel
+                studentsList = studentsList,
+                onStudentListChange = { studentsList = it }
+
             )
 
 
@@ -148,14 +138,12 @@ fun StudentScreen(
                 scrollVerticalState = scrollVerticalState,
                 studentListFocusRequester = studentListFocusRequester,
                 onDelete = { index -> studentsList = studentsList.filterIndexed { i, _ -> i != index } },
+                onClearAll = { studentsList = emptyList() }
             )
         }
 
         SaveChangesButton(
-            studentsFile = studentsFile,
-            fileManager = fileManager,
-            studentsList = studentsList,
-            onSaveChangues = {
+            onSaveChanges = {
                 studentsFile?.let { file ->
                     fileManager.saveStudents(file, studentsList)
                 }
@@ -195,8 +183,11 @@ fun StudentScreen(
 @Composable
 fun StudentFormColumn(
     newStudent: String,
+    onNewStudentChange: (String) -> Unit,
     newStudentFocusRequester: FocusRequester,
-    viewModel: IStudentsViewModel
+    studentsList: List<String>,
+    onStudentListChange: (List<String>) -> Unit
+
 ){
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
@@ -204,7 +195,7 @@ fun StudentFormColumn(
 
         OutlinedTextField(
             value = newStudent,
-            onValueChange = { viewModel.changeName(it) },
+            onValueChange = { onNewStudentChange(it) },
             label = { Text("New student name") },
             modifier = Modifier
                 .padding(15.dp)
@@ -214,9 +205,9 @@ fun StudentFormColumn(
         Button(
             onClick = {
                 if (newStudent.isNotBlank()) {
-                    //studentsList = studentsList + newStudent
-                    //newStudent = ""
-                    viewModel.addStudent()
+                    onStudentListChange(studentsList + newStudent)
+                    onNewStudentChange("")
+
                 }
                 newStudentFocusRequester.requestFocus()
             },
@@ -234,7 +225,8 @@ fun StudentListColumn(
     scrollState: ScrollState,
     scrollVerticalState: LazyListState,
     studentListFocusRequester: FocusRequester,
-    onDelete: (Int) -> Unit
+    onDelete: (Int) -> Unit,
+    onClearAll: () -> Unit
 ){
     Column(
         modifier = Modifier
@@ -284,7 +276,7 @@ fun StudentListColumn(
         }
 
         Button(
-            onClick = { studentsList = emptyList() },
+            onClick = { onClearAll() },
             modifier = Modifier
                 .padding(15.dp),
         ) {
@@ -296,20 +288,23 @@ fun StudentListColumn(
 
 @Composable
 fun SaveChangesButton(
-    studentsFile: File?,
-    fileManager: IFileManager,
-    studentsList: List<String>,
-    onSaveChangues: () -> Unit
+    onSaveChanges: () -> Unit
 ){
-    Button(
-        onClick = onSaveChangues,
-        modifier = Modifier
-            .padding(16.dp)
-            //.align(Alignment.BottomCenter)
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.BottomCenter
     ) {
-        Text("Save changes")
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Button(
+                onClick = onSaveChanges
+            ) {
+                Text("Save changes")
+            }
+        }
     }
-
 }
 
 
