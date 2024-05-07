@@ -4,6 +4,7 @@ import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.res.useResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.application
+import java.io.File
 
 fun main() = application{
 
@@ -13,8 +14,8 @@ fun main() = application{
         windowWidth = 800.dp,
         windowHeight = 800.dp
     )
-    val fileManager: IFileManager = FileManager()
-    val studentsFile = fileManager.getFile("src/main/resources/students.txt")
+    val fileManager: IFiles = FileManager()
+    val studentsFile = File("src/main/resources/students.txt")
 
 
     MainWindow(

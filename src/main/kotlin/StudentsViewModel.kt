@@ -1,16 +1,25 @@
 import java.io.File
 import androidx.compose.runtime.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
 interface IStudentsViewModel{
     val newStudent: State<String>
     val studentList: List<String>
+    val infoMessage: State<String>
+    val showInfoMessage: State<Boolean>
     fun changeName(name: String)
     fun addStudent()
     fun saveStudents()
     fun clearStudents()
+    fun loadStudents()
+    fun deleteStudent(index: Int)
 }
 
 class StudentsViewModel(
-    private val fileManagement: IFileManager,
+    private val fileManagement: IFiles,
     private val studentsFile: File
 ): IStudentsViewModel {
 
@@ -25,6 +34,33 @@ class StudentsViewModel(
     private var _studentList = mutableStateListOf<String>()
     override val studentList: List<String> = _studentList
 
+    private val _infoMessage = mutableStateOf("")
+    override val infoMessage: State<String> = _infoMessage
+
+    private val _showInfoMessage = mutableStateOf(false)
+    override val showInfoMessage: State<Boolean> = _showInfoMessage
+
+
+
+    override fun loadStudents() {
+        val loadedStudents = fileManagement.leer(studentsFile)
+        if (loadedStudents != null) {
+            _studentList.addAll(loadedStudents)
+        } else {
+            updateInfoMessage("No se pudieron cargar los datos de los estudiantes.")
+        }
+    }
+
+    private fun updateInfoMessage(message: String) {
+        _infoMessage.value = message
+        _showInfoMessage.value = true
+        CoroutineScope(Dispatchers.Default).launch {
+            delay(2000)
+            _showInfoMessage.value = false
+            _infoMessage.value = ""
+        }
+    }
+
 
     override fun changeName(name: String) {
         if (name.length < MAXCHARACTERS) _newStudent.value = name
@@ -37,8 +73,34 @@ class StudentsViewModel(
         }
     }
 
-    override fun saveStudents(){
+    override fun saveStudents() {
+        var error = ""
+        val newStudentsFile = fileManagement.crearFic(studentsFile.absolutePath)
+        if (newStudentsFile != null) {
+            for (student in studentList) {
+                error = fileManagement.escribir(studentsFile, "$student\n")
+                if (error.isNotEmpty()) {
+                    break
+                }
+            }
+            if (error.isNotEmpty()) {
+                updateInfoMessage(error)
+            } else {
+                updateInfoMessage("Fichero guardado correctamente")
+            }
+        } else {
+            updateInfoMessage("No se pudo generar el fichero studentList.txt")
+        }
+    }
 
+    override fun clearStudents(){
+        _studentList.clear()
+    }
+
+    override fun deleteStudent(index: Int) {
+       if (index in _studentList.indices){
+           _studentList.removeAt(index)
+       }
     }
 
 }

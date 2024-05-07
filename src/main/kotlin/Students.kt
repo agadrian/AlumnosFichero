@@ -1,8 +1,6 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.BoxScopeInstance.align
-import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -63,7 +61,7 @@ fun MainWindow(
     icon: BitmapPainter,
     windowState: WindowState,
     resizable: Boolean,
-    fileManager: IFileManager,
+    fileManager: IFiles,
     studentsFile: File?,
     onCloseMainWindow : () -> Unit
 ) {
@@ -95,14 +93,15 @@ fun MainWindow(
 
 @Composable
 fun StudentScreen(
-    fileManager: IFileManager,
+    fileManager: IFiles,
     studentsFile: File?,
     viewModel: IStudentsViewModel
 ){
     val newStudent by viewModel.newStudent
-    var studentsList by remember { mutableStateOf<List<String>>(emptyList()) }
+    val studentsList = viewModel.studentList
+    //var studentsList by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    //dEJAR AQUI
+    //DEJAR AQUI
     val scrollState = rememberScrollState()
     val scrollVerticalState = rememberLazyListState()
 
@@ -116,11 +115,8 @@ fun StudentScreen(
     var infoMessage by remember { mutableStateOf("") }
     var showInfoMessage by remember { mutableStateOf(false) }
 
-    LaunchedEffect(studentsFile) {
-        studentsFile?.let { file ->
-            val loadedStudents = fileManager.loadStudents(file)
-            studentsList = loadedStudents
-        }
+    LaunchedEffect(key1 = true) {  // key1 = true asegura que esto se ejecute solo una vez
+        viewModel.loadStudents()
     }
 
     Box {
@@ -147,20 +143,20 @@ fun StudentScreen(
                 scrollState = scrollState,
                 scrollVerticalState = scrollVerticalState,
                 studentListFocusRequester = studentListFocusRequester,
-                onDelete = { index -> studentsList = studentsList.filterIndexed { i, _ -> i != index } },
+                onDelete = { index -> viewModel.deleteStudent(index) },
+                viewModel = viewModel
             )
         }
 
         SaveChangesButton(
-            studentsFile = studentsFile,
-            fileManager = fileManager,
-            studentsList = studentsList,
             onSaveChangues = {
-                studentsFile?.let { file ->
-                    fileManager.saveStudents(file, studentsList)
-                }
-                infoMessage = "Fichero guardado."
-                showInfoMessage = true
+//                studentsFile?.let { file ->
+//                    fileManager.saveStudents(file, studentsList)
+//                }
+//                infoMessage = "Fichero guardado."
+//                showInfoMessage = true
+                viewModel.saveStudents()
+                newStudentFocusRequester.requestFocus()
             }
 
         )
@@ -234,7 +230,8 @@ fun StudentListColumn(
     scrollState: ScrollState,
     scrollVerticalState: LazyListState,
     studentListFocusRequester: FocusRequester,
-    onDelete: (Int) -> Unit
+    onDelete: (Int) -> Unit,
+    viewModel: IStudentsViewModel
 ){
     Column(
         modifier = Modifier
@@ -284,7 +281,7 @@ fun StudentListColumn(
         }
 
         Button(
-            onClick = { studentsList = emptyList() },
+            onClick = { viewModel.clearStudents() },
             modifier = Modifier
                 .padding(15.dp),
         ) {
@@ -296,9 +293,6 @@ fun StudentListColumn(
 
 @Composable
 fun SaveChangesButton(
-    studentsFile: File?,
-    fileManager: IFileManager,
-    studentsList: List<String>,
     onSaveChangues: () -> Unit
 ){
     Button(
