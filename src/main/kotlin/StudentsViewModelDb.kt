@@ -8,7 +8,9 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class StudentsViewModelDb(
-                          private val studentRepository:  IStudentRepository
+    private val fileManagement: IFiles,
+    private val studentsFile: File,
+    private val studentRepository:  IStudentRepository
 ): IStudentsViewModel {
 
 
@@ -73,7 +75,7 @@ class StudentsViewModelDb(
     //TODO: MIRARLO
     override fun saveStudents() {
         var error = ""
-
+        val newStudentsFile = fileManagement.crearFic(studentsFile.absolutePath)
         if (newStudentsFile != null) {
             for (student in studentList) {
                 error = fileManagement.escribir(studentsFile, "$student\n")

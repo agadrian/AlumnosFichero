@@ -58,6 +58,8 @@ fun MainWindow(
     studentsFile: File?,
     onCloseMainWindow : () -> Unit
 ) {
+
+
     Window(
         onCloseRequest = onCloseMainWindow,
         title = title,
@@ -66,15 +68,16 @@ fun MainWindow(
         state = windowState
     ) {
 
-        val studentsViewModel = StudentsViewModel(fileManager, studentsFile!!)
+        val repository = StudentRepository()
+
         MaterialTheme {
             Surface(
                 color = colorWindowBackground,
                 modifier = Modifier.fillMaxSize()
             ) {
-                StudentScreen(
-                    viewModel = studentsViewModel
-                )
+                //StudentScreen(StudentsViewModelDb(fileManager,studentsFile!!,repository))
+
+                StudentScreen(StudentsViewModelFile(fileManager,studentsFile!!))
             }
         }
     }

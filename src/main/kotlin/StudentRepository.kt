@@ -6,9 +6,9 @@ import java.sql.Statement
 /**
  * Sin usar .use
  */
-class StudentRepository {
+class StudentRepository: IStudentRepository {
 
-    fun getAllStudents(): Result<List<String>> {
+    override fun getAllStudents(): Result<List<String>> {
         val students = mutableListOf<String>()
         var connectionDb: Connection? = null
         var stmt: Statement? = null
@@ -36,7 +36,7 @@ class StudentRepository {
     }
 
 
-    fun updateStudents(students: List<String>): Result<Unit> {
+    override fun updateStudents(students: List<String>): Result<Unit> {
         var connectionDb: Connection? = null
         var stmt: Statement? = null
         var error: Exception? = null
@@ -58,8 +58,7 @@ class StudentRepository {
 
 
             connectionDb.commit()
-            return Result.success()
-
+            return Result.success(Unit)
 
         } catch (e: Exception) {
             error = e
@@ -70,10 +69,21 @@ class StudentRepository {
             }
 
         } finally {
-            connectionDb?.autoCommit = true
-            stmt?.close()
-            connectionDb?.close()
-            return Result.failure(e)
+            try {
+                connectionDb?.autoCommit = true
+                stmt?.close()
+                connectionDb?.close()
+            }catch (e: SQLException){
+                error = e
+            }
+
+
+            // Retorno aquí fuera del try-catch-finally
+            return if (error != null) {
+                Result.failure(error)
+            } else {
+                Result.success(Unit)
+            }
         }
     }
 }

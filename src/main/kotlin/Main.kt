@@ -6,6 +6,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.application
 import java.io.File
 
+class SqlErrorException(message: String) : Exception(message)
+
+
 fun main() = application{
 
     val title = "AdriAG"
