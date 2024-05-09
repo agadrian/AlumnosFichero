@@ -47,6 +47,7 @@ fun GetWindowState(
 
 
 
+
 @Composable
 @Preview
 fun MainWindow(
@@ -75,9 +76,9 @@ fun MainWindow(
                 color = colorWindowBackground,
                 modifier = Modifier.fillMaxSize()
             ) {
-                //StudentScreen(StudentsViewModelDb(fileManager,studentsFile!!,repository))
+                StudentScreen(StudentsViewModelDb(fileManager, studentsFile!!, repository))
+                //StudentScreen(StudentsViewModelFile(fileManager, studentsFile!!))
 
-                StudentScreen(StudentsViewModelFile(fileManager,studentsFile!!))
             }
         }
     }

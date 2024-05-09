@@ -16,7 +16,6 @@ class StudentsViewModelDb(
 
     companion object {
         private const val MAXCHARACTERS = 10
-        //private const val MAXNUMSTUDENTSVISIBLE = 7
     }
 
     private var _newStudent = mutableStateOf("")
@@ -42,7 +41,7 @@ class StudentsViewModelDb(
         val result = studentRepository.getAllStudents()
         result.onSuccess {
             _studentList.clear()
-            _studentList.addAll(studentList)
+            _studentList.addAll(it)
             updateInfoMessage("Registros cargados correctamente")
         }.onFailure {
             exception -> updateInfoMessage(exception.message ?: "")
@@ -72,7 +71,7 @@ class StudentsViewModelDb(
         }
     }
 
-    //TODO: MIRARLO
+
     override fun saveStudents() {
         var error = ""
         val newStudentsFile = fileManagement.crearFic(studentsFile.absolutePath)
@@ -83,10 +82,11 @@ class StudentsViewModelDb(
                     break
                 }
             }
+            studentRepository.updateStudents(studentList)
             if (error.isNotEmpty()) {
                 updateInfoMessage(error)
             } else {
-                updateInfoMessage("Fichero guardado correctamente")
+                updateInfoMessage("Datos insertados correctamente")
             }
         } else {
             updateInfoMessage("No se pudo generar el fichero studentList.txt")

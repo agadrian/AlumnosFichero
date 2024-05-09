@@ -46,7 +46,7 @@ class StudentRepository: IStudentRepository {
             connectionDb.autoCommit = false
 
             stmt = connectionDb.createStatement()
-            val query = " DELETE FROM students"
+            val query = "DELETE FROM students"
             stmt.execute(query)
 
 

@@ -5,8 +5,8 @@ import java.sql.SQLException
 
 object Database {
     private const val URL = "jdbc:mysql://localhost:3306/studentdb"
-    private const val USER = "studentuser"
-    private const val PASSWORD = "password"
+    private const val USER = "root"
+    private const val PASSWORD = "root"
 
     init {
         try {
@@ -21,7 +21,7 @@ object Database {
         try {
             DriverManager.getConnection(URL, USER, PASSWORD)
         } catch (e: SQLTimeoutException) {
-            throw SqlErrorException("$e : La conexión ha excedido el tiempo de espera permitido.")
+            throw DatabaseTimeoutException("$e : La conexión ha excedido el tiempo de espera permitido.")
 
         } catch (e: SQLException) {
             throw SqlErrorException("Error de SQL: ${e.message}")
@@ -34,5 +34,5 @@ object Database {
         } catch (e: SQLTimeoutException) {
             throw SqlErrorException("Error al cerrar la conexion ($e)")
         }
-    }
 }
+

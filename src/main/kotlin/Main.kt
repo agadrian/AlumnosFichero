@@ -7,6 +7,7 @@ import androidx.compose.ui.window.application
 import java.io.File
 
 class SqlErrorException(message: String) : Exception(message)
+class DatabaseTimeoutException(message: String) : Exception(message)
 
 
 fun main() = application{
